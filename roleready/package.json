@@ -1,0 +1,5 @@
+{
+    "name": "roleready",
+    "private": true,
+    "workspaces": ["apps/*", "packages/*"]
+}
