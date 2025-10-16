@@ -225,8 +225,8 @@ class CareerAdvisorService:
         
         if domain in self.course_recommendations:
             for skill in recommended_skills:
-                skill_lower = skill.lower()
-                
+        skill_lower = skill.lower()
+        
                 # Find matching course category
                 for category, course_list in self.course_recommendations[domain].items():
                     if skill_lower in category or any(skill_lower in course_skill.lower() for course_skill in [category]):
@@ -285,8 +285,8 @@ class CareerAdvisorService:
             return []
 
     async def update_learning_progress(
-        self, 
-        user_id: str, 
+        self,
+        user_id: str,
         skill_domain: str, 
         completed_skills: List[str]
     ) -> Dict:
@@ -317,7 +317,7 @@ class CareerAdvisorService:
                 }).eq("id", learning_path["id"]).execute()
                 
                 return {"success": True, "progress": progress}
-            else:
+        else:
                 # Create new learning path
                 new_path = {
                     "user_id": user_id,

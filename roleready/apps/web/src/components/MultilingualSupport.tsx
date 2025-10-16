@@ -1,12 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Globe, Languages, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface LanguageInfo {
   language: string;
@@ -173,31 +167,24 @@ export default function MultilingualSupport({
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Globe className="h-5 w-5" />
-          Multilingual Support
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 w-full">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-lg">🌍</span>
+        <h3 className="font-bold text-gray-900">Multilingual Support</h3>
+      </div>
+      
+      <div className="space-y-4">
         {/* Language Detection */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Detected Language</span>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <button 
               onClick={detectLanguage}
               disabled={loading || !resumeContent}
+              className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 text-sm"
             >
-              {loading ? (
-                <RefreshCw className="h-3 w-3 animate-spin mr-1" />
-              ) : (
-                <Languages className="h-3 w-3 mr-1" />
-              )}
-              Detect
-            </Button>
+              {loading ? 'Detecting...' : 'Detect'}
+            </button>
           </div>
 
           {detectedLanguage && (
@@ -206,19 +193,13 @@ export default function MultilingualSupport({
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{detectedLanguage.language_name}</span>
-                  <Badge variant={detectedLanguage.supported ? "default" : "secondary"}>
-                    {detectedLanguage.supported ? (
-                      <>
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Supported
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        Limited Support
-                      </>
-                    )}
-                  </Badge>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    detectedLanguage.supported 
+                      ? 'bg-green-100 text-green-700' 
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {detectedLanguage.supported ? '✓ Supported' : '⚠ Limited Support'}
+                  </span>
                 </div>
                 <p className="text-xs text-gray-600">
                   Language code: {detectedLanguage.language.toUpperCase()}
@@ -233,28 +214,21 @@ export default function MultilingualSupport({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Translate to English</span>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <button 
                 onClick={() => translateText('en')}
                 disabled={translating}
+                className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 text-sm"
               >
-                {translating ? (
-                  <RefreshCw className="h-3 w-3 animate-spin mr-1" />
-                ) : (
-                  <Languages className="h-3 w-3 mr-1" />
-                )}
-                Translate
-              </Button>
+                {translating ? 'Translating...' : 'Translate'}
+              </button>
             </div>
 
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Translating your resume to English will improve AI analysis and job matching accuracy.
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                ⚠️ Translating your resume to English will improve AI analysis and job matching accuracy.
                 Your original text will be preserved.
-              </AlertDescription>
-            </Alert>
+              </p>
+            </div>
           </div>
         )}
 
@@ -262,31 +236,24 @@ export default function MultilingualSupport({
         <div className="space-y-3">
           <span className="text-sm font-medium">Translate to Other Language</span>
           <div className="flex gap-2">
-            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Select target language" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
-                  <SelectItem key={code} value={code}>
-                    <div className="flex items-center gap-2">
-                      <span>{getLanguageFlag(code)}</span>
-                      <span>{name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button 
+            <select 
+              value={selectedLanguage} 
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
+                <option key={code} value={code}>
+                  {getLanguageFlag(code)} {name}
+                </option>
+              ))}
+            </select>
+            <button 
               onClick={() => translateText(selectedLanguage)}
               disabled={translating || selectedLanguage === detectedLanguage?.language}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 text-sm"
             >
-              {translating ? (
-                <RefreshCw className="h-3 w-3 animate-spin" />
-              ) : (
-                <Languages className="h-3 w-3" />
-              )}
-            </Button>
+              {translating ? 'Translating...' : '🌍'}
+            </button>
           </div>
         </div>
 
@@ -307,10 +274,9 @@ export default function MultilingualSupport({
 
         {/* Error Display */}
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-sm">⚠️ {error}</p>
+          </div>
         )}
 
         {/* Language Support Info */}
@@ -321,7 +287,7 @@ export default function MultilingualSupport({
             <p>🌍 Supporting {Object.keys(SUPPORTED_LANGUAGES).length} languages globally</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

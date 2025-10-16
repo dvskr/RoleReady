@@ -1,12 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, TrendingUp, Target, CheckCircle, ExternalLink } from 'lucide-react';
 
 interface CareerInsight {
   domain: string;
@@ -115,77 +109,74 @@ export default function CareerAdvisor({ resumeId, resumeContent, onUpdateProgres
 
   if (loading) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Career Growth Plan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2">Analyzing your career path...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 w-full">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 bg-blue-600 rounded-full"></div>
+          <h3 className="font-bold text-gray-900">Career Growth Plan</h3>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2">Analyzing your career path...</span>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Career Growth Plan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-          <Button onClick={analyzeCareerPath} className="mt-4">
-            Try Again
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 w-full">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 bg-blue-600 rounded-full"></div>
+          <h3 className="font-bold text-gray-900">Career Growth Plan</h3>
+        </div>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+          <p className="text-red-700">{error}</p>
+        </div>
+        <button 
+          onClick={analyzeCareerPath}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
     );
   }
 
   if (!insights) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Career Growth Plan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Target className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600 mb-4">
-              Get personalized career guidance based on your resume
-            </p>
-            <Button onClick={analyzeCareerPath}>
-              Analyze My Career Path
-            </Button>
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 w-full">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 bg-blue-600 rounded-full"></div>
+          <h3 className="font-bold text-gray-900">Career Growth Plan</h3>
+        </div>
+        <div className="text-center py-8">
+          <div className="w-12 h-12 mx-auto bg-gray-100 rounded-full mb-4 flex items-center justify-center">
+            <span className="text-gray-600 text-xl">🎯</span>
           </div>
-        </CardContent>
-      </Card>
+          <p className="text-gray-600 mb-4">
+            Get personalized career guidance based on your resume
+          </p>
+          <button 
+            onClick={analyzeCareerPath}
+            className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Analyze My Career Path
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 w-full">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-5 h-5 bg-blue-600 rounded-full"></div>
+        <h3 className="font-bold text-gray-900">
           Career Growth Plan - {getDomainDisplayName(insights.domain)}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </h3>
+      </div>
+      
+      <div className="space-y-6">
         {/* Alignment Score */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
@@ -194,7 +185,12 @@ export default function CareerAdvisor({ resumeId, resumeContent, onUpdateProgres
               {Math.round(insights.alignment_score * 100)}% - {getAlignmentLabel(insights.alignment_score)}
             </span>
           </div>
-          <Progress value={insights.alignment_score * 100} className="h-2" />
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${insights.alignment_score * 100}%` }}
+            />
+          </div>
         </div>
 
         {/* Missing Skills */}
@@ -204,18 +200,16 @@ export default function CareerAdvisor({ resumeId, resumeContent, onUpdateProgres
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {insights.missing_skills.slice(0, 6).map((skill, index) => (
                 <div key={index} className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
                     onClick={() => markSkillCompleted(skill)}
-                    className="h-6 w-6 p-0"
+                    className="h-6 w-6 p-0 border-2 rounded flex items-center justify-center hover:bg-blue-100 transition-colors"
                   >
                     {completedSkills.has(skill) ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-green-600 text-sm">✓</span>
                     ) : (
-                      <div className="h-4 w-4 border-2 border-gray-300 rounded" />
+                      <span className="text-gray-400 text-sm">○</span>
                     )}
-                  </Button>
+                  </button>
                   <span className="text-sm">{skill}</span>
                 </div>
               ))}
@@ -227,7 +221,7 @@ export default function CareerAdvisor({ resumeId, resumeContent, onUpdateProgres
         {insights.learning_paths.length > 0 && (
           <div className="space-y-3">
             <h4 className="font-semibold text-sm flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
+              <span className="text-lg">📚</span>
               Recommended Learning Paths
             </h4>
             <div className="space-y-2">
@@ -237,12 +231,14 @@ export default function CareerAdvisor({ resumeId, resumeContent, onUpdateProgres
                     <p className="font-medium text-sm">{course.title}</p>
                     <p className="text-xs text-gray-600">{course.platform}</p>
                   </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={course.url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      View
-                    </a>
-                  </Button>
+                  <a 
+                    href={course.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-700 text-xs font-medium border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                  >
+                    View →
+                  </a>
                 </div>
               ))}
             </div>
@@ -255,9 +251,9 @@ export default function CareerAdvisor({ resumeId, resumeContent, onUpdateProgres
             <h4 className="font-semibold text-sm">Your Strengths</h4>
             <div className="flex flex-wrap gap-1">
               {insights.skill_gaps.strong.slice(0, 8).map((skill, index) => (
-                <Badge key={index} variant="secondary" className="bg-green-100 text-green-800">
+                <span key={index} className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
                   {skill}
-                </Badge>
+                </span>
               ))}
             </div>
           </div>
@@ -283,10 +279,13 @@ export default function CareerAdvisor({ resumeId, resumeContent, onUpdateProgres
         </div>
 
         {/* Refresh Button */}
-        <Button variant="outline" onClick={analyzeCareerPath} className="w-full">
+        <button 
+          onClick={analyzeCareerPath}
+          className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300"
+        >
           Refresh Analysis
-        </Button>
-      </CardContent>
-    </Card>
+        </button>
+      </div>
+    </div>
   );
 }

@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(demoUser);
   };
 
-  const value: AuthContextType & { loginAsDemo: () => void } = {
+  const value: AuthContextType = {
     user,
     login,
     logout,

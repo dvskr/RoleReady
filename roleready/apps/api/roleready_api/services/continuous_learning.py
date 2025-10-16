@@ -115,8 +115,8 @@ class ContinuousLearningService:
             high_conf_accuracy = self._calculate_high_confidence_accuracy(
                 predictions, true_labels, confidence_scores
             )
-            
-            return {
+        
+        return {
                 "accuracy": round(accuracy, 3),
                 "precision": round(precision, 3),
                 "recall": round(recall, 3),
@@ -141,8 +141,8 @@ class ContinuousLearningService:
             words2 = set(text2.split())
             
             if not words1 or not words2:
-                return 0.0
-            
+            return 0.0
+        
             intersection = words1.intersection(words2)
             union = words1.union(words2)
             
@@ -151,7 +151,7 @@ class ContinuousLearningService:
         except Exception as e:
             logger.error(f"Error calculating text similarity: {e}")
             return 0.0
-
+        
     def _calculate_high_confidence_accuracy(
         self, predictions: List[int], true_labels: List[int], confidence_scores: List[float]
     ) -> float:
@@ -240,7 +240,7 @@ class ContinuousLearningService:
         return f"{major}.{minor}.{patch}"
 
     async def evaluate_model_candidates(
-        self, 
+        self,
         current_model_version: str, 
         candidate_versions: List[str]
     ) -> Dict:

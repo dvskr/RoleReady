@@ -268,7 +268,7 @@ class RecruiterMatchingService:
                 missing_skills.append(job_skill)
         
         return matched_skills, missing_skills
-
+    
     async def _store_candidate_matches(self, job_description_id: int, candidates: List[Dict]) -> None:
         """
         Store candidate matches in the database
