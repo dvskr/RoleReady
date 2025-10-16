@@ -1,0 +1,130 @@
+/* Classic Resume Theme */
+@media print {
+  .resume.theme-classic {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 1in;
+  }
+  
+  .resume.theme-classic .header {
+    text-align: center;
+    margin-bottom: 2em;
+    padding-bottom: 1em;
+    border-bottom: 1px solid #000;
+  }
+  
+  .resume.theme-classic .name {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #000;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+  }
+  
+  .resume.theme-classic .contact {
+    margin-top: 0.5em;
+    font-size: 11pt;
+  }
+  
+  .resume.theme-classic .contact p {
+    margin: 0.2em 0;
+  }
+  
+  .resume.theme-classic .section {
+    margin-bottom: 1.5em;
+  }
+  
+  .resume.theme-classic .section-title {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    margin-bottom: 0.8em;
+    border-bottom: 1px solid #000;
+    padding-bottom: 0.2em;
+  }
+  
+  .resume.theme-classic .job {
+    margin-bottom: 1.2em;
+  }
+  
+  .resume.theme-classic .job-header {
+    margin-bottom: 0.5em;
+  }
+  
+  .resume.theme-classic .job-title {
+    font-weight: bold;
+    color: #000;
+  }
+  
+  .resume.theme-classic .job-company {
+    font-weight: normal;
+    color: #000;
+  }
+  
+  .resume.theme-classic .job-dates {
+    font-size: 11pt;
+    color: #000;
+    font-style: italic;
+  }
+  
+  .resume.theme-classic .job-bullets {
+    margin-left: 0.5em;
+  }
+  
+  .resume.theme-classic .job-bullets li {
+    margin-bottom: 0.3em;
+    color: #000;
+  }
+  
+  .resume.theme-classic .skills {
+    display: block;
+  }
+  
+  .resume.theme-classic .skill-item {
+    display: inline-block;
+    margin-right: 1em;
+    margin-bottom: 0.3em;
+    color: #000;
+  }
+  
+  .resume.theme-classic .skill-item:after {
+    content: "•";
+    margin-left: 1em;
+    color: #000;
+  }
+  
+  .resume.theme-classic .skill-item:last-child:after {
+    content: "";
+  }
+  
+  .resume.theme-classic .summary {
+    text-align: justify;
+    color: #000;
+  }
+  
+  .resume.theme-classic .education {
+    margin-bottom: 0.5em;
+  }
+  
+  .resume.theme-classic .education-degree {
+    font-weight: bold;
+    color: #000;
+  }
+  
+  .resume.theme-classic .education-school {
+    color: #000;
+  }
+  
+  .resume.theme-classic .education-dates {
+    font-size: 11pt;
+    color: #000;
+    font-style: italic;
+  }
+}

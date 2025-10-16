@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "RoleReady Professional",
+  "version": "2.0.0",
+  "description": "Professional resume tools: JD scraping and safe autofill",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "action": { 
+    "default_title": "RoleReady Tools",
+    "default_popup": "popup.html"
+  },
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    { 
+      "matches": ["*://*.linkedin.com/*", "*://*.indeed.com/*", "*://*.glassdoor.com/*", "*://*.ziprecruiter.com/*", "*://*.monster.com/*", "*://*.careerbuilder.com/*"], 
+      "js": ["content.js"], 
+      "run_at": "document_idle" 
+    }
+  ],
+  "host_permissions": ["*://*.linkedin.com/*", "*://*.indeed.com/*", "*://*.glassdoor.com/*", "*://*.ziprecruiter.com/*", "*://*.monster.com/*", "*://*.careerbuilder.com/*"]
+}

@@ -9,6 +9,13 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3001"
     ]
     
+    # OpenAI Configuration
+    OPENAI_API_KEY: str = ""
+    
+    # Supabase Configuration
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_KEY: str = ""
+    
     class Config:
         env_file = ".env"
 
