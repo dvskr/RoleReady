@@ -30,3 +30,14 @@ def require_user(authorization: str = Header(None)):
     if not user_id:
         raise HTTPException(status_code=401, detail='No user in token')
     return {"user_id": user_id, "claims": claims}
+
+async def get_current_user():
+    """
+    Mock function for development - in production this would validate JWT tokens
+    For now, return a mock user for testing
+    """
+    return {
+        "id": "user-123",
+        "email": "test@example.com",
+        "name": "Test User"
+    }

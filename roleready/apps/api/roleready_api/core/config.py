@@ -5,8 +5,11 @@ class Settings(BaseSettings):
     ALLOW_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://localhost:3002",  # Add port 3002
         "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001"
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",  # Add port 3002
+        "http://192.168.1.160:3002"  # Add network IP
     ]
     
     # OpenAI Configuration
@@ -20,3 +23,7 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 settings = Settings()
+
+def get_settings():
+    """Get application settings"""
+    return settings

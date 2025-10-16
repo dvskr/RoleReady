@@ -3,43 +3,36 @@
 import Link from "next/link";
 import { Trends } from "@/components/Trends";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
-
-interface Resume {
-  id: string;
-  title: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  parent_id?: string;
-}
+import { useAuth } from "@/contexts/AuthContext";
+import { listResumes, Resume } from "@/lib/resumes";
+import { ClientOnly } from "@/components/ClientOnly";
+import TeamSwitcher from "@/components/TeamSwitcher";
+import APIKeyManager from "@/components/APIKeyManager";
+import PlanStatus from "@/components/PlanStatus";
 
 export default function DashboardPage() {
+  const { user, logout } = useAuth();
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
+  const [showAPIKeyManager, setShowAPIKeyManager] = useState(false);
 
   useEffect(() => {
-    fetchResumes();
-  }, []);
+    if (user) {
+      fetchResumes();
+    }
+  }, [user, currentTeamId]);
 
   const fetchResumes = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('resumes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching resumes:', error);
-      } else {
-        setResumes(data || []);
-      }
+      const userResumes = await listResumes();
+      // Filter resumes by team if a team is selected
+      const filteredResumes = currentTeamId 
+        ? userResumes.filter(resume => resume.team_id === currentTeamId)
+        : userResumes.filter(resume => !resume.team_id); // Personal resumes
+      setResumes(filteredResumes);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching resumes:', error);
     } finally {
       setLoading(false);
     }
@@ -47,82 +40,81 @@ export default function DashboardPage() {
 
   const createNewResume = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('resumes')
-        .insert({
-          title: 'New Resume',
-          content: 'Enter your resume content here...',
-          user_id: user.id
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating resume:', error);
-      } else {
-        window.location.href = `/dashboard/editor?id=${data.id}`;
-      }
+      // For demo purposes, redirect to editor with a new ID
+      const newId = 'resume-' + Math.random().toString(36).substr(2, 9);
+      window.location.href = `/dashboard/editor?id=${newId}`;
     } catch (error) {
       console.error('Error:', error);
     }
   };
 
   const shareResume = async (resumeId: string) => {
+    // Mock sharing functionality
     const email = prompt("Enter collaborator email:");
     const role = prompt("Select role (viewer/commenter/editor):", "viewer");
     
     if (!email || !role) return;
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/collab/invite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          resume_id: resumeId,
-          email: email,
-          role: role
-        })
-      });
-
-      if (response.ok) {
-        alert('Invite sent successfully!');
-      } else {
-        alert('Error sending invite');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error sending invite');
-    }
+    // In a real app, this would make an API call
+    alert(`Invite sent to ${email} with ${role} role! (Demo mode)`);
   };
 
   return (
-    <div className="py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome to Role Ready
-            </h1>
-            <p className="text-lg text-gray-600">
-              Manage your resumes and collaborate with others
-            </p>
-          </div>
-          <button
-            onClick={createNewResume}
-            className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            New Resume
-          </button>
+    <ClientOnly fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
+      </div>
+    }>
+      <div className="py-8">
+        <div className="max-w-6xl mx-auto px-4">
+                 <div className="flex justify-between items-center mb-8">
+                   <div>
+                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                       Welcome back, {user?.name}!
+                     </h1>
+                     <p className="text-lg text-gray-600">
+                       Manage your resumes and collaborate with others
+                     </p>
+                   </div>
+                   <div className="flex space-x-3">
+                     <button
+                       onClick={createNewResume}
+                       className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                     >
+                       New Resume
+                     </button>
+                     <button
+                       onClick={() => setShowAPIKeyManager(true)}
+                       className="bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors"
+                     >
+                       API Keys
+                     </button>
+                     <button
+                       onClick={logout}
+                       className="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+                     >
+                       Logout
+                     </button>
+                   </div>
+                 </div>
+
+                 {/* Team Switcher */}
+                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                   <TeamSwitcher 
+                     currentTeamId={currentTeamId}
+                     onTeamChange={setCurrentTeamId}
+                   />
+                 </div>
+
+                 {/* Plan Status */}
+                 <div className="mb-6">
+                   <PlanStatus />
+                 </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -226,6 +218,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      
+      {/* API Key Manager Modal */}
+      {showAPIKeyManager && (
+        <APIKeyManager onClose={() => setShowAPIKeyManager(false)} />
+      )}
+    </ClientOnly>
   );
 }

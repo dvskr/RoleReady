@@ -2,6 +2,7 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Dict, List, Tuple, Optional
 import re, difflib
+from datetime import datetime
 
 from docx import Document
 from docx.text.paragraph import Paragraph
@@ -13,6 +14,8 @@ from PIL import Image
 import numpy as np
 import nltk
 from nltk.tokenize import sent_tokenize
+
+from .multilingual import multilingual_service
 
 # ---------- Fuzzy heading mapping ----------
 CANONICAL = {
@@ -254,6 +257,13 @@ def _docx_text_with_tables(doc: Document) -> List[str]:
 
 def _parse_from_lines(lines: List[str]) -> Dict:
     lines = _clean_lines("\n".join(lines)) if isinstance(lines, list) else _clean_lines(lines)
+    
+    # Join all text for language detection
+    full_text = " ".join(lines)
+    
+    # Detect language
+    detected_language = multilingual_service.detect_language(full_text)
+    
     sections = _split_sections(lines)
     summary = " ".join(
         sections.get("summary", []) or sections.get("professional summary", []) or sections.get("profile", [])
@@ -287,7 +297,58 @@ def _parse_from_lines(lines: List[str]) -> Dict:
         sections.get("work history", [])
     )
     experience = _extract_bullets_from_lines(exp_lines) or _extract_bullets_from_lines(lines)
-    return {"summary": summary, "skills": skills, "experience": experience}
+    
+    # Add language information to the result
+    result = {
+        "summary": summary, 
+        "skills": skills, 
+        "experience": experience,
+        "language": detected_language,
+        "language_name": multilingual_service.get_language_name(detected_language)
+    }
+    
+    # If not English, translate for embedding purposes and store both versions
+    if detected_language != 'en':
+        try:
+            # Translate summary
+            translated_summary = multilingual_service.translate_text(summary, 'en', detected_language) if summary else ""
+            
+            # Translate skills (limit to avoid API costs)
+            translated_skills = []
+            for skill in skills[:15]:  # Limit to top 15 skills
+                try:
+                    translated_skill = multilingual_service.translate_text(skill, 'en', detected_language)
+                    translated_skills.append(translated_skill)
+                except Exception as e:
+                    print(f"Failed to translate skill '{skill}': {e}")
+                    translated_skills.append(skill)  # Keep original if translation fails
+            
+            # Translate experience (limit to avoid API costs)
+            translated_experience = []
+            for exp in experience[:8]:  # Limit to top 8 experience items
+                try:
+                    translated_exp = multilingual_service.translate_text(exp, 'en', detected_language)
+                    translated_experience.append(translated_exp)
+                except Exception as e:
+                    print(f"Failed to translate experience '{exp}': {e}")
+                    translated_experience.append(exp)  # Keep original if translation fails
+            
+            # Store translation data
+            result.update({
+                "translated_content": {
+                    "summary": translated_summary,
+                    "skills": translated_skills,
+                    "experience": translated_experience,
+                    "translated_at": datetime.utcnow().isoformat(),
+                    "translation_model": "openai-gpt-3.5-turbo"
+                }
+            })
+        except Exception as e:
+            print(f"Translation failed: {e}")
+            # Store error info but don't fail the entire parsing
+            result["translation_error"] = str(e)
+    
+    return result
 
 def parse_docx(file_bytes: bytes) -> Tuple[Dict,str]:
     doc = Document(BytesIO(file_bytes))
@@ -391,3 +452,37 @@ def parse_any(filename: str, file_bytes: bytes) -> Dict:
     structure["raw_text_present"] = bool(structure.get("summary") or structure.get("experience"))
 
     return structure
+
+# Public API function for parsing resume content
+async def parse_resume_content(text: str) -> Dict:
+    """
+    Parse resume text into structured sections for the public API
+    """
+    try:
+        lines = text.split('\n')
+        structure = _parse_from_lines(lines)
+        
+        # Add confidence score
+        conf = 0.0
+        if structure.get("summary"): conf += 0.35
+        if structure.get("skills"): conf += 0.25
+        if len(structure.get("experience", [])) >= 5: conf += 0.25
+        if len(structure.get("experience", [])) >= 10: conf += 0.15
+        structure["confidence"] = round(conf, 2)
+        
+        return {
+            "sections": structure,
+            "confidence": structure["confidence"]
+        }
+    except Exception as e:
+        return {
+            "sections": {
+                "personal_info": "",
+                "summary": "",
+                "experience": [],
+                "education": [],
+                "skills": []
+            },
+            "confidence": 0.0,
+            "error": str(e)
+        }

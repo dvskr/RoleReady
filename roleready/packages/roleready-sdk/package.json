@@ -1,0 +1,54 @@
+{
+  "name": "@roleready/sdk",
+  "version": "1.0.0",
+  "description": "JavaScript SDK for RoleReady resume analysis API",
+  "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"No build step required for vanilla JS\"",
+    "lint": "eslint index.js",
+    "docs": "jsdoc index.js -d docs"
+  },
+  "keywords": [
+    "resume",
+    "cv",
+    "job",
+    "recruitment",
+    "hr",
+    "ats",
+    "api",
+    "sdk",
+    "javascript"
+  ],
+  "author": "RoleReady Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roleready/roleready-sdk-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/roleready/roleready-sdk-js/issues"
+  },
+  "homepage": "https://docs.roleready.app/sdk/javascript",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "jsdoc": "^4.0.0"
+  },
+  "peerDependencies": {},
+  "dependencies": {}
+}

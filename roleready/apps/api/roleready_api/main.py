@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from roleready_api.core.config import settings
 from roleready_api.routes import health, parse, align, rewrite, auth, export, analytics
+from roleready_api.routes import step10_features_router, subscription_router
 
 
 app = FastAPI(title="RoleReady API")
@@ -21,3 +22,5 @@ app.include_router(rewrite.router, prefix=settings.API_PREFIX)
 app.include_router(auth.router, prefix=settings.API_PREFIX)
 app.include_router(export.router, prefix=settings.API_PREFIX)
 app.include_router(analytics.router, prefix=settings.API_PREFIX)
+app.include_router(step10_features_router, prefix=settings.API_PREFIX)
+app.include_router(subscription_router, prefix=settings.API_PREFIX)

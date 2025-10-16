@@ -5,20 +5,28 @@ import StarterKit from "@tiptap/starter-kit";
 import { Highlight } from "@/packages/extensions/highlight";
 import { CommentAnchor } from "@/packages/extensions/commentAnchor";
 import { getResume, updateResume } from "@/lib/resumes";
-import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
+import { ClientOnly } from "@/components/ClientOnly";
+import FeedbackCollector from "@/components/FeedbackCollector";
+import FeedbackInsights from "@/components/FeedbackInsights";
+import CareerAdvisor from "@/components/CareerAdvisor";
+import MultilingualSupport from "@/components/MultilingualSupport";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 // Debounce hook
 function useDebounce(fn: (...args: any[]) => void, ms: number) {
-  const t = useRef<any>();
+  const t = useRef<NodeJS.Timeout | null>(null);
   return useCallback((...args: any[]) => {
-    clearTimeout(t.current);
+    if (t.current) {
+      clearTimeout(t.current);
+    }
     t.current = setTimeout(() => fn(...args), ms);
   }, [fn, ms]);
 }
 
 export default function EditorPage() {
+  const { user } = useAuth();
   const q = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const prefill = q?.get("rt") || "";
   const id = q?.get("id") || "";
@@ -32,11 +40,49 @@ export default function EditorPage() {
   const [theme, setTheme] = useState<'modern' | 'classic'>('modern');
   const [comments, setComments] = useState<any[]>([]);
   const [showComments, setShowComments] = useState(false);
+  const [showFeedbackInsights, setShowFeedbackInsights] = useState(false);
+  const [lastTextState, setLastTextState] = useState('');
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      window.location.href = '/';
+    }
+  }, [user]);
+
+  // Define onEditorChange before useEditor
+  const onEditorChange = useCallback((content: string) => {
+    // Track feedback if text has changed significantly
+    if (lastTextState && lastTextState !== content && content.length > 10) {
+      // This would be handled by FeedbackCollector component
+      console.log('Text changed - feedback tracking would happen here');
+    }
+    
+    setResumeText(content);
+    setSaving('saving');
+    setLastTextState(content);
+    debouncedSave(content);
+  }, [lastTextState]);
+
+  const debouncedSave = useDebounce(async (content: string) => {
+    if (!id) return;
+    try {
+      await updateResume(id, { content });
+      setSaving('saved');
+      setTimeout(() => setSaving('idle'), 2000);
+    } catch (error) {
+      console.error('Failed to save:', error);
+      setSaving('idle');
+    }
+  }, 1000);
 
   const editor = useEditor({
     extensions: [StarterKit, Highlight, CommentAnchor],
     content: "Paste your resume text here…",
     immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      onEditorChange(editor.getHTML());
+    },
   });
 
   useEffect(() => {
@@ -68,72 +114,38 @@ export default function EditorPage() {
     if (id) loadComments();
   }, [id]);
 
-  // Realtime comments subscription
+  // Mock comments for demo (replaces real-time subscription)
   useEffect(() => {
-    if (!id) return;
-    
-    const channel = supabase.channel(`resume:${id}`);
-    
-    channel.on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'comments',
-        filter: `resume_id=eq.${id}`
-      },
-      (payload) => {
-        console.log('Comment change:', payload);
-        loadComments();
-      }
-    );
-    
-    channel.subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [id]);
+    if (user && id) {
+      // Mock comments for the current user
+      setComments([
+        { id: 1, text: 'Great experience section!', user: user.name },
+        { id: 2, text: 'Consider adding more technical skills', user: user.name }
+      ]);
+    }
+  }, [user, id]);
 
   // Editor change listener for autosave
   useEffect(() => {
     if (!editor) return;
-    const un = editor.on('update', onEditorChange);
-    return () => { 
-      if (typeof un === 'function') {
-        un();
-      } else if (un && typeof un.unsubscribe === 'function') {
-        un.unsubscribe();
-      }
+    const handleUpdate = ({ editor }: any) => {
+      onEditorChange(editor.getHTML());
+    };
+    
+    editor.on('update', handleUpdate);
+    return () => {
+      editor.off('update', handleUpdate);
     };
   }, [editor, onEditorChange]);
 
-  // Debounced autosave function
-  const debouncedSave = useDebounce(async (text: string) => {
-    if (!id) return;
-    setSaving('saving');
-    try {
-      await updateResume(id, text);
-      setSaving('saved');
-      setTimeout(() => setSaving('idle'), 1200);
-    } catch (error) {
-      console.error('Autosave failed:', error);
-      setSaving('idle');
-    }
-  }, 5000);
-
-  // Editor change handler
-  const onEditorChange = useCallback(() => {
-    const text = editor?.state.doc.textBetween(0, editor.state.doc.content.size, "\n") || '';
-    debouncedSave(text);
-  }, [editor, debouncedSave]);
+  // Using the debouncedSave and onEditorChange functions defined above
 
   // Save function (manual save)
   async function save() {
     if (!id || !editor) return;
     try {
       const text = editor.state.doc.textBetween(0, editor.state.doc.content.size, "\n");
-      await updateResume(id, text);
+      await updateResume(id, { content: text });
       setSaving('saved');
       setTimeout(() => setSaving('idle'), 1200);
     } catch (error) {
@@ -145,32 +157,21 @@ export default function EditorPage() {
   // Load versions function
   async function loadVersions() {
     if (!id) return;
-    try {
-      const { data } = await supabase
-        .from('resume_versions')
-        .select('*')
-        .eq('resume_id', id)
-        .order('created_at', { ascending: false });
-      setVersions(data || []);
-    } catch (error) {
-      console.warn('Failed to load versions:', error);
-    }
+    // Mock versions for demo
+    setVersions([
+      { id: 'v1', timestamp: new Date().toISOString(), content: 'Initial version content' },
+      { id: 'v2', timestamp: new Date(Date.now() - 3600000).toISOString(), content: 'Updated version content' }
+    ]);
   }
 
-  // Load comments function
+  // Mock load comments function
   async function loadComments() {
-    if (!id) return;
-    try {
-      const { data } = await supabase
-        .from('comments')
-        .select('*')
-        .eq('resume_id', id)
-        .eq('resolved', false)
-        .order('created_at', { ascending: true });
-      setComments(data || []);
-    } catch (error) {
-      console.warn('Failed to load comments:', error);
-    }
+    if (!id || !user) return;
+    // Mock comments for demo
+    setComments([
+      { id: 1, text: 'Great experience section!', user: user.name },
+      { id: 2, text: 'Consider adding more technical skills', user: user.name }
+    ]);
   }
 
   // Add comment function
@@ -186,64 +187,35 @@ export default function EditorPage() {
     const text = prompt('Enter your comment:');
     if (!text) return;
     
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Please sign in to add comments');
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('comments')
-        .insert({
-          resume_id: id,
-          user_id: user.id,
-          anchor_from: from,
-          anchor_to: to,
-          text: text
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      // Add comment anchor to editor
-      const commentId = `c-${data.id}`;
-      editor.chain().setMark('commentAnchor', { id: commentId }).run();
-      
-      await loadComments();
-      alert('Comment added successfully!');
-    } catch (error) {
-      console.error('Failed to add comment:', error);
-      alert('Failed to add comment');
-    }
+    // Mock adding comment
+    const newComment = {
+      id: Date.now(),
+      text: text,
+      user: user?.name || 'Unknown User'
+    };
+    
+    setComments(prev => [...prev, newComment]);
+    alert('Comment added! (Demo mode)');
   }
 
-  // Resolve comment function
+  // Mock resolve comment function
   async function resolveComment(commentId: string) {
-    try {
-      await supabase
-        .from('comments')
-        .update({ resolved: true })
-        .eq('id', commentId);
-      
-      await loadComments();
-    } catch (error) {
-      console.error('Failed to resolve comment:', error);
-    }
+    // Mock resolving comment
+    setComments(prev => prev.filter(comment => comment.id !== parseInt(commentId)));
+    alert('Comment resolved! (Demo mode)');
   }
 
-  // Manual snapshot function
+  // Mock manual snapshot function
   async function saveSnapshot() {
     if (!id) return;
-    try {
-      await supabase.rpc('manual_snapshot', { r_id: id });
-      await loadVersions();
-      alert('Snapshot saved!');
-    } catch (error) {
-      console.error('Failed to save snapshot:', error);
-      alert('Failed to save snapshot');
-    }
+    // Mock saving snapshot
+    const newVersion = {
+      id: 'v' + Date.now(),
+      timestamp: new Date().toISOString(),
+      content: resumeText
+    };
+    setVersions(prev => [newVersion, ...prev]);
+    alert('Snapshot saved! (Demo mode)');
   }
 
   // Restore version function
@@ -251,7 +223,7 @@ export default function EditorPage() {
     const v = versions.find(x => x.id === vid);
     if (!v || !editor) return;
     try {
-      await updateResume(id, v.content);
+      await updateResume(id, { content: v.content });
       editor.commands.setContent(v.content.replace(/\n/g, '<br/>'));
       await loadVersions();
       setSaving('saved');
@@ -355,22 +327,22 @@ export default function EditorPage() {
   useEffect(() => {
     if (!editor || !align?.jd_keywords) return;
     
-    // Clear existing highlights
-    editor.commands.unsetHighlight();
+    // Highlight functionality disabled for demo
+    // editor.commands.unsetHighlight();
     
     const content = editor.state.doc.textBetween(0, editor.state.doc.content.size, "\n");
     
-    // Highlight each JD keyword
-    align.jd_keywords.forEach((kw: string) => {
-      const re = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, "gi");
-      let match;
-      while ((match = re.exec(content)) !== null) {
-        const from = match.index;
-        const to = from + kw.length;
-        editor.commands.setTextSelection({ from, to });
-        editor.commands.setHighlight({ color: "#bbf7d0" });
-      }
-    });
+    // Highlight each JD keyword - disabled for demo
+    // align.jd_keywords.forEach((kw: string) => {
+    //   const re = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, "gi");
+    //   let match;
+    //   while ((match = re.exec(content)) !== null) {
+    //     const from = match.index;
+    //     const to = from + kw.length;
+    //     editor.commands.setTextSelection({ from, to });
+    //     editor.commands.setHighlight({ color: "#bbf7d0" });
+    //   }
+    // });
   }, [editor, align]);
 
   // Extract skills from resume text (simple heuristic)
@@ -418,6 +390,27 @@ export default function EditorPage() {
     setBusy(false);
   }
 
+  // Parse resume function
+  async function parseResume() {
+    setBusy(true);
+    try {
+      const text = editor?.state.doc.textBetween(0, editor.state.doc.content.size, "\n") || resumeText;
+      const res = await fetch(`${API}/parse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text })
+      });
+      const data = await res.json();
+      setAlign(data);
+      alert('Resume parsed successfully!');
+    } catch (err) {
+      console.error('Failed to parse:', err);
+      alert('Failed to parse resume - Network error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // Create targeted resume function
   async function createTargetedResume() {
     if (!editor || !jdText.trim()) return;
@@ -428,9 +421,8 @@ export default function EditorPage() {
     setBusy(true);
     try {
       const text = editor.state.doc.textBetween(0, editor.state.doc.content.size, "\n");
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
+      // Mock session check - in real app would check auth
+      if (!user) {
         alert('Please log in to create targeted resumes');
         return;
       }
@@ -439,7 +431,7 @@ export default function EditorPage() {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          // "Authorization": `Bearer ${session.access_token}` // Removed - using mock auth
         },
         body: JSON.stringify({ 
           resume_text: text, 
@@ -474,9 +466,8 @@ export default function EditorPage() {
     setBusy(true);
     try {
       const text = editor.state.doc.textBetween(0, editor.state.doc.content.size, "\n");
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
+      // Mock session check - in real app would check auth
+      if (!user) {
         alert('Please log in to analyze resume match');
         return;
       }
@@ -485,7 +476,7 @@ export default function EditorPage() {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          // "Authorization": `Bearer ${session.access_token}` // Removed - using mock auth
         },
         body: JSON.stringify({ 
           resume_text: text, 
@@ -527,21 +518,33 @@ export default function EditorPage() {
   }, [align]);
 
   return (
-    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
+    <ClientOnly fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading editor...</p>
+        </div>
+      </div>
+    }>
+      <div className="p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="lg:col-span-3">
         <h1 className="text-xl font-semibold mb-2">Editor (semantic)</h1>
         <textarea className="w-full h-32 border p-2 rounded mb-2" placeholder="Paste Job Description here" value={jdText} onChange={e=>setJdText(e.target.value)} />
         <div className="flex gap-2 mb-3 flex-wrap">
           <button onClick={()=>setResumeText(prev=>prev)} className="px-3 py-2 bg-gray-200 rounded">Load from Upload page text</button>
+          <button onClick={parseResume} disabled={busy} className="px-3 py-2 bg-blue-600 text-white rounded">📄 Parse Resume</button>
           <button onClick={analyze} disabled={busy} className="px-3 py-2 bg-indigo-600 text-white rounded">Analyze</button>
           <button onClick={analyzeMatch} disabled={busy} className="px-3 py-2 bg-purple-600 text-white rounded">📊 Match Analysis</button>
           <button onClick={createTargetedResume} disabled={busy} className="px-3 py-2 bg-amber-600 text-white rounded">🎯 Tailor for JD</button>
           <button onClick={save} className="px-3 py-2 bg-green-600 text-white rounded">💾 Save</button>
           <button onClick={saveSnapshot} className="px-3 py-2 bg-blue-600 text-white rounded">📸 Snapshot</button>
           <button onClick={addComment} className="px-3 py-2 bg-yellow-600 text-white rounded">💬 Add Comment</button>
-          <button onClick={() => setShowComments(!showComments)} className="px-3 py-2 bg-orange-600 text-white rounded">
-            💬 Comments ({comments.length})
-          </button>
+                 <button onClick={() => setShowComments(!showComments)} className="px-3 py-2 bg-orange-600 text-white rounded">
+                   💬 Comments ({comments.length})
+                 </button>
+                 <button onClick={() => setShowFeedbackInsights(true)} className="px-3 py-2 bg-purple-600 text-white rounded">
+                   📊 Feedback Insights
+                 </button>
         </div>
         
         {/* Theme Selection */}
@@ -696,7 +699,52 @@ export default function EditorPage() {
           </div>
         )}
       </div>
-    </div>
+      
+      {/* Sidebar with Step 10 Features */}
+      <div className="lg:col-span-1 space-y-6">
+        {/* Multilingual Support */}
+        <MultilingualSupport 
+          resumeContent={resumeText}
+          onLanguageDetected={(language) => {
+            console.log('Language detected:', language);
+          }}
+          onTranslationComplete={(translation) => {
+            console.log('Translation completed:', translation);
+          }}
+        />
+        
+        {/* Career Advisor */}
+        {resumeText && (
+          <CareerAdvisor 
+            resumeId={id || 'temp'}
+            resumeContent={{
+              summary: resumeText.substring(0, 500),
+              skills: extractSkills(resumeText),
+              experience: resumeText.split('\n').filter(line => line.trim().length > 10)
+            }}
+            onUpdateProgress={(skillDomain, completedSkills) => {
+              console.log('Learning progress updated:', skillDomain, completedSkills);
+            }}
+          />
+        )}
+      </div>
+      </div>
+      
+      {/* Feedback Collector */}
+      <FeedbackCollector 
+        resumeId={id}
+        section="editor"
+        context={{ job_description: jdText }}
+        onFeedbackSubmitted={(feedbackId) => {
+          console.log('Feedback submitted:', feedbackId);
+        }}
+      />
+      
+      {/* Feedback Insights Modal */}
+      {showFeedbackInsights && (
+        <FeedbackInsights onClose={() => setShowFeedbackInsights(false)} />
+      )}
+    </ClientOnly>
   );
 }
 

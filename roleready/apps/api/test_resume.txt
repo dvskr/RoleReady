@@ -1,0 +1,29 @@
+John Doe
+Software Engineer
+john.doe@email.com
+(555) 123-4567
+
+SUMMARY
+Experienced software engineer with 5+ years in full-stack development. 
+Skilled in Python, JavaScript, React, and FastAPI.
+
+EXPERIENCE
+Software Developer - Company A (2020-2023)
+- Developed web applications using React and Node.js
+- Led team of 3 developers
+- Increased application performance by 40%
+
+Junior Developer - Company B (2018-2020)
+- Built REST APIs using Python and FastAPI
+- Collaborated with design team on UI/UX improvements
+- Implemented automated testing reducing bugs by 30%
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of Technology (2014-2018)
+
+SKILLS
+- Programming Languages: Python, JavaScript, TypeScript
+- Frameworks: React, FastAPI, Node.js, Express
+- Databases: PostgreSQL, MongoDB
+- Tools: Git, Docker, AWS
